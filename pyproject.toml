@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "predictprotein1-solubility"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.24.3"
+pandas = "^2.0.1"
+seaborn = "^0.12.2"
+matplotlib = "^3.7.1"
+transformers = "^4.28.1"
+sentencepiece = "^0.1.99"
+accelerate = "^0.18.0"
+scikit-learn = "^1.2.2"
+tqdm = "^4.65.0"
+h5py = "^3.8.0"
+umap-learn = "^0.5.3"
+pytorch-lightning = "^2.0.2"
+
+#poetry run pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
