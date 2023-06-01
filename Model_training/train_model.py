@@ -38,6 +38,11 @@ def init_parser():
 
     return opt
 
+# TODO: Implement main training Loop with 5 folc cross val and wandb logging automatic dataset detection and dataloader init
+
+def main(args):
+    pass
+
 def test():
     """
     lsadkjfösldfjasölkfjölks

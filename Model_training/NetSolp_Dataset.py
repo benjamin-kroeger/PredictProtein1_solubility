@@ -30,6 +30,10 @@ class NetsolpDataset(Dataset):
 
     # TODO: Combine embedd tupels with data
 
+    # TODO: Implement read csv data
+    def _read_csv(self):
+        pass
+
     def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[int, torch.tensor]]:
         """
         Reads any embedding type from a h5 file as long as every embed is stored as its own dataset.
@@ -50,6 +54,7 @@ class NetsolpDataset(Dataset):
 
         return embeddings
 
+    # TODO: rewrite this so that we don't have to reload all our data for each split
     def _drop_unecesary_partition(self, data: list[tuple], mode: mode_enum, val_parition: int) -> list[tuple]:
         """
         Drops all entries that are not allowed in the dataset depening on whether this Dataset is the train or validation set and on which partition
