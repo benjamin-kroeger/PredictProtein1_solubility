@@ -1,12 +1,15 @@
+import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from constants import seq_encoding_enum, mode_enum
 import h5py
 from tqdm import tqdm
 import numpy as np
+from pathlib import Path
 
 
 class NetsolpDataset(Dataset):
+
 
     # seq_encoding param is infered from the model
     def __init__(self, seq_encoding: seq_encoding_enum, set_mode: mode_enum, val_partion: int, dtype: torch.dtype, path_to_seq_data: str,
@@ -32,7 +35,9 @@ class NetsolpDataset(Dataset):
 
     # TODO: Implement read csv data
     def _read_csv(self):
-        pass
+        data_folder = Path("Data")
+        train_set = data_folder / "PSI_Biology_solubility_trainset.csv"
+        return pd.read_csv(train_set)
 
     def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[int, torch.tensor]]:
         """
