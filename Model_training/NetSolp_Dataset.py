@@ -31,18 +31,17 @@ class NetsolpDataset(Dataset):
         # only keep sol,seq/embeddpp/embedpa
         self.data = self._drop_unecesary_partition(data=None, mode=set_mode, val_parition=val_partion)
 
-    # TODO: Combine embedd tupels with data
 
-    # TODO: Implement read csv data
     def _read_csv(self, path: str):
         data = Path(path)
         return pd.read_csv(data)
 
-    def _merge_dataset(embeddings: list[tuple[int, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
+    def _merge_dataset(self, embeddings: list[tuple[int, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
         """
-        :param embeddings: protein embeddings read from h5
-        :param csv: solubility trainset read from csv
-        :return: list of tuples, each tuple ( id, embedding-tensor, fasta-seq, solubility, partition )
+        Merge data from solubility trainset (csv) with embeddings read from h5 file
+        :param embeddings: protein embeddings read from h5, result from _read_embeddings_from_h5
+        :param csv: solubility trainset read from csv, result from _read_csv
+        :return: list of tuples, each tuple: ( id, embedding-tensor, fasta-seq, solubility, partition )
         """
         dataset = []
         for emb in embeddings:
@@ -50,6 +49,17 @@ class NetsolpDataset(Dataset):
                 _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
                 dataset.append((emb[0], emb[1], fasta, sol, partition))
         return dataset
+
+    def _drop_unnecessary(self, dataset: list[tuple[int, torch.tensor, float, str, float]]) -> list[tuple]:
+        """
+        Remove everything from data except for fasta-seq and solubility score
+        :param dataset: whole dataset, result from _merge_dataset function
+        :return list of tuples, each tuple: (fasta-seq, solubility)
+        """
+        clean_dataset = []
+        for elem in dataset:
+            clean_dataset.append((elem[2], elem[3]))
+        return clean_dataset
 
     def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[str, torch.tensor]]:
         """
