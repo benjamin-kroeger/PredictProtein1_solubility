@@ -25,7 +25,7 @@ class NetsolpDataset(Dataset):
         else:
             seq_data = self._read_csv(path_to_seq_data)
             embedding_data = self._read_embeddings_from_h5(path_to_embedds, dtype=dtype)
-            solubility_data = self._merge_dataset(embedding_data, seq_data)
+            solubility_data = self._merge_dataset(embedding_data, seq_data,dtype=dtype)
 
         dropped_data = self._drop_unecesary_partition(data=solubility_data, mode=set_mode, val_parition=val_partion)
         self.data = self._drop_unnecessary(dropped_data)
@@ -46,7 +46,7 @@ class NetsolpDataset(Dataset):
         data = Path(path)
         return pd.read_csv(data)
 
-    def _merge_dataset(self, embeddings: list[tuple[str, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
+    def _merge_dataset(self, embeddings: list[tuple[str, torch.tensor]], csv: pd.DataFrame,dtype:torch.dtype) -> list[tuple]:
         """
         Merge data from solubility trainset (csv) with embeddings read from h5 file
         :param embeddings: protein embeddings read from h5, result from _read_embeddings_from_h5
@@ -57,7 +57,7 @@ class NetsolpDataset(Dataset):
         for emb in embeddings:
             if emb[0] in csv["sid"].tolist():
                 _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
-                dataset.append((emb[0], emb[1], sol, partition))
+                dataset.append((emb[0], emb[1], torch.tensor(sol).to(dtype), partition))
         return dataset
 
     def _drop_unnecessary(self, dataset: list[tuple[int, torch.tensor, float, str, float]]) -> list[tuple]:
@@ -119,9 +119,9 @@ class NetsolpDataset(Dataset):
 
 
 if __name__ == "__main__":
-    d = NetsolpDataset(seq_encoding_enum.seq, mode_enum.val, 1, torch.float32,
-                       "/home/andi/PycharmProjects/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
-                       "/home/andi/PycharmProjects/predictprotein1_solubility/Data/output_pp (copy).h5")
+    d = NetsolpDataset(seq_encoding_enum.pp, mode_enum.val, 1, torch.float32,
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/output_pp.h5")
 
     print(d.__getitem__(1))
     print(len(d))

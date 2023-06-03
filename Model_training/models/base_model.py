@@ -8,7 +8,7 @@ from Model_training.utils.metrics import compute_metrics
 import torch.nn.functional as F
 from collections import defaultdict
 from argparse import Namespace
-
+from Model_training.utils.collate_functions import my_collate
 
 class BaseModel(pl.LightningModule):
     seq_encoding = seq_encoding_enum.pp
@@ -24,7 +24,7 @@ class BaseModel(pl.LightningModule):
 
         self.args = args
 
-    def _general_step(self, batch, batch_idx, mode):
+    def general_step(self, batch, batch_idx, mode):
         encoded_seqs = batch[0]
         solubility_scores = batch[1]
 
@@ -36,24 +36,25 @@ class BaseModel(pl.LightningModule):
         if mode == 'val':
             metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
             metric_dict['val_loss'] = loss
+            return metric_dict
         if mode == 'train':
-            return {'train_loss': loss}
+            return {'loss': loss}
 
     def training_step(self, batch, batch_idx):
-        metric_dict = self._general_step(batch=batch, batch_idx=batch_idx, mode='train')
+        metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='train')
         self.log_dict(metric_dict)
 
         return metric_dict
 
     def validation_step(self, batch, batch_idx):
-        metric_dict = self._general_step(batch=batch, batch_idx=batch_idx, mode='val')
+        metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
         for key, value in metric_dict.items():
             self.val_outputs[key].append(value)
         return metric_dict
 
     def on_validation_epoch_end(self):
         for key, value in self.val_outputs.items():
-            self.log(key, np.array(value).mean())
+            self.log(key, torch.tensor(value).mean())
 
         self.val_outputs = defaultdict(list)
 
@@ -63,7 +64,7 @@ class BaseModel(pl.LightningModule):
     def train_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers)
+                                               num_workers=self.args.num_workers,collate_fn=my_collate)
         if self.seq_encoding == seq_encoding_enum.pa:
             # TODO: Implement dataloader with the right collate function
             raise NotImplementedError
@@ -73,8 +74,8 @@ class BaseModel(pl.LightningModule):
 
     def val_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers)
+            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers,collate_fn=my_collate)
         if self.seq_encoding == seq_encoding_enum.pa:
             # TODO: Implement dataloader with the right collate function
             raise NotImplementedError

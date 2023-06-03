@@ -7,6 +7,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from Model_training.models.base_model import BaseModel
+from Model_training.models.lin_models import *
 from NetSolp_Dataset import NetsolpDataset
 from utils.constants import seq_encoding_enum, mode_enum
 import pytorch_lightning as pl
@@ -37,7 +38,7 @@ def init_parser():
                         help='Set if gradient accumulation is desired')
     parser.add_argument('--epochs', type=int, required=False, default=100,
                         help='Set maxs number of epochs.')
-    parser.add_argument('--model', type=str, required=False, default="Regressor_Simple",
+    parser.add_argument('--model', type=str, required=True, default="Regressor_Simple",
                         help='Model architecture')
 
     # Performance related arguments
@@ -63,7 +64,7 @@ def main(args):
     # set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.cpu_only:
-        device = torch.dtype('cpu')
+        device = torch.device('cpu')
 
     # create an experiment name
     experiment_name = f'{args.model}-{datetime.now().strftime("%d/%m/%Y|%H:%M")}-{os.environ.get("USERNAME")}'
@@ -71,11 +72,11 @@ def main(args):
     # initialize 5 fold cross validation
     for fold in range(5):
         train_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.train, val_partion=fold, dtype=dtype,
-                                        path_to_seq_data=args.solubility_data, path_to_embedds=args.path_to_embedds)
+                                        path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
         val_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.val, val_partion=fold, dtype=dtype,
-                                      path_to_seq_data=args.solubility_data, path_to_embedds=args.path_to_embedds)
+                                      path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
         # init the model and send it to the device
-        model = globals()[args.model](args=args, train_set=None, val_set=None)
+        model = globals()[args.model](args=args, train_set=train_data_set, val_set=val_data_set)
         model.to(device)
         # set up early stopping and storage of the best model
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min")
@@ -90,8 +91,8 @@ def main(args):
         trainer = pl.Trainer(
             precision=16 if args.half_precision else 32,
             max_epochs=args.epochs,
-            accelerator='gpu' if device == torch.device('cuda') else None,
-            devices=1 if device == torch.device('cuda') else None,
+            accelerator='gpu' if device == torch.device('cuda') else 'cpu',
+            devices=1 ,#if device == torch.device('cuda') else None,
             callbacks=[early_stop_callback, best_checkpoint],
             num_sanity_val_steps=0,
             logger=wandb_logger,
