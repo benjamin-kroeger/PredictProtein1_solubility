@@ -34,12 +34,24 @@ class NetsolpDataset(Dataset):
     # TODO: Combine embedd tupels with data
 
     # TODO: Implement read csv data
-    def _read_csv(self):
-        data_folder = Path("Data")
-        train_set = data_folder / "PSI_Biology_solubility_trainset.csv"
-        return pd.read_csv(train_set)
+    def _read_csv(self, path: str):
+        data = Path(path)
+        return pd.read_csv(data)
 
-    def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[int, torch.tensor]]:
+    def _merge_dataset(embeddings: list[tuple[int, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
+        """
+        :param embeddings: protein embeddings read from h5
+        :param csv: solubility trainset read from csv
+        :return: list of tuples, each tuple ( id, embedding-tensor, fasta-seq, solubility, partition )
+        """
+        dataset = []
+        for emb in embeddings:
+            if emb[0] in csv["sid"].tolist():
+                _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
+                dataset.append((emb[0], emb[1], fasta, sol, partition))
+        return dataset
+
+    def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[str, torch.tensor]]:
         """
         Reads any embedding type from a h5 file as long as every embed is stored as its own dataset.
         It does not distinguish between per residue and per amino embeddings
@@ -58,6 +70,7 @@ class NetsolpDataset(Dataset):
                 pbar.update(1)
 
         return embeddings
+
 
     # TODO: rewrite this so that we don't have to reload all our data for each split
     def _drop_unecesary_partition(self, data: list[tuple], mode: mode_enum, val_parition: int) -> list[tuple]:
