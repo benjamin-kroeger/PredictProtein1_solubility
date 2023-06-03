@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from constants import seq_encoding_enum, mode_enum
+from utils.constants import seq_encoding_enum, mode_enum
 import h5py
 from tqdm import tqdm
 import numpy as np
