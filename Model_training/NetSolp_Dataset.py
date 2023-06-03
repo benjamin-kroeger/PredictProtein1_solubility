@@ -10,17 +10,29 @@ from pathlib import Path
 
 class NetsolpDataset(Dataset):
 
-
     # seq_encoding param is infered from the model
-    def __init__(self, seq_encoding: seq_encoding_enum, set_mode: mode_enum, val_partion: int, dtype: torch.dtype, path_to_seq_data: str,
+    def __init__(self, seq_encoding: seq_encoding_enum, set_mode: mode_enum, val_partion: int, dtype: torch.dtype,
+                 path_to_seq_data: str,
                  path_to_embedds: str = None):
         assert 0 <= val_partion <= 4, "The selected partiontion is unknown"
         if seq_encoding != seq_encoding.seq and path_to_embedds is None:
             raise ValueError('path_to_embedds must be defined when trying to use embeddings')
 
         # load all files
+        if seq_encoding == seq_encoding_enum.seq:
+            solubility_data = self._read_csv(path_to_seq_data).values.tolist()
+            solubility_data = [(data_tuple[0], data_tuple[2], data_tuple[1], data_tuple[3]) for data_tuple in solubility_data]
+        else:
+            seq_data = self._read_csv(path_to_seq_data)
+            embedding_data = self._read_embeddings_from_h5(path_to_embedds, dtype=dtype)
+            solubility_data = self._merge_dataset(embedding_data, seq_data)
+
+        dropped_data = self._drop_unecesary_partition(data=solubility_data, mode=set_mode, val_parition=val_partion)
+        self.data = self._drop_unnecessary(dropped_data)
+
 
         # keep seq or embedd based in seq_encodiung
+        #
 
         # list of tuples
         # (id,sol,seq/embeddpp/embedpa,part)
@@ -29,14 +41,12 @@ class NetsolpDataset(Dataset):
         # id is used to map embedds to sol and part
 
         # only keep sol,seq/embeddpp/embedpa
-        self.data = self._drop_unecesary_partition(data=None, mode=set_mode, val_parition=val_partion)
-
 
     def _read_csv(self, path: str):
         data = Path(path)
         return pd.read_csv(data)
 
-    def _merge_dataset(self, embeddings: list[tuple[int, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
+    def _merge_dataset(self, embeddings: list[tuple[str, torch.tensor]], csv: pd.DataFrame) -> list[tuple]:
         """
         Merge data from solubility trainset (csv) with embeddings read from h5 file
         :param embeddings: protein embeddings read from h5, result from _read_embeddings_from_h5
@@ -47,7 +57,7 @@ class NetsolpDataset(Dataset):
         for emb in embeddings:
             if emb[0] in csv["sid"].tolist():
                 _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
-                dataset.append((emb[0], emb[1], fasta, sol, partition))
+                dataset.append((emb[0], emb[1], sol, partition))
         return dataset
 
     def _drop_unnecessary(self, dataset: list[tuple[int, torch.tensor, float, str, float]]) -> list[tuple]:
@@ -58,7 +68,7 @@ class NetsolpDataset(Dataset):
         """
         clean_dataset = []
         for elem in dataset:
-            clean_dataset.append((elem[2], elem[3]))
+            clean_dataset.append((elem[1], elem[2]))
         return clean_dataset
 
     def _read_embeddings_from_h5(self, path_to_embedds: str, dtype: torch.dtype) -> list[tuple[str, torch.tensor]]:
@@ -80,7 +90,6 @@ class NetsolpDataset(Dataset):
                 pbar.update(1)
 
         return embeddings
-
 
     # TODO: rewrite this so that we don't have to reload all our data for each split
     def _drop_unecesary_partition(self, data: list[tuple], mode: mode_enum, val_parition: int) -> list[tuple]:
@@ -106,5 +115,13 @@ class NetsolpDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-
         return self.data[index]
+
+
+if __name__ == "__main__":
+    d = NetsolpDataset(seq_encoding_enum.seq, mode_enum.val, 1, torch.float32,
+                       "/home/andi/PycharmProjects/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
+                       "/home/andi/PycharmProjects/predictprotein1_solubility/Data/output_pp (copy).h5")
+
+    print(d.__getitem__(1))
+    print(len(d))
