@@ -46,11 +46,3 @@ class fine_tune_t5(BaseModel):
         output = self.model(droped)
 
         return output
-
-    def configure_optimizers(self):
-
-        params = self.parameters()
-
-        optim = torch.optim.Adam(params=params, betas=(0.9, 0.999), lr=self.args.lr, weight_decay=self.args.reg)
-
-        return [optim]
