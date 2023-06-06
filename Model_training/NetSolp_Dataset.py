@@ -23,7 +23,7 @@ class NetsolpDataset(Dataset):
         # load all files
         if seq_encoding == seq_encoding.seq:
             solubility_data = self._read_csv(path_to_seq_data).values.tolist()
-            solubility_data = [(data_tuple[0], data_tuple[2], data_tuple[1], data_tuple[3]) for data_tuple in solubility_data]
+            solubility_data = [(data_tuple[0], data_tuple[2], torch.tensor(data_tuple[1]).to(dtype), data_tuple[3]) for data_tuple in solubility_data]
         else:
             seq_data = self._read_csv(path_to_seq_data)
             embedding_data = self._read_embeddings_from_h5(path_to_embedds, dtype=dtype)
