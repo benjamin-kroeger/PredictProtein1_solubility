@@ -8,6 +8,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Model_training.models.base_model import BaseModel
 from Model_training.models.lin_models import *
+from Model_training.models.fine_tune import fine_tune_t5
 from NetSolp_Dataset import NetsolpDataset
 from utils.constants import seq_encoding_enum, mode_enum
 import pytorch_lightning as pl
@@ -52,7 +53,7 @@ def init_parser():
     return args
 
 
-# TODO: Implement main training Loop with 5 folc cross val and wandb logging automatic dataset detection and dataloader init
+
 def main(args):
     # set the default dtype to float32
     dtype = torch.float32
@@ -78,6 +79,8 @@ def main(args):
         # init the model and send it to the device
         model = globals()[args.model](args=args, train_set=train_data_set, val_set=val_data_set)
         model.to(device)
+        if args.half_precision:
+            model.half()
         # set up early stopping and storage of the best model
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min")
         best_checkpoint = ModelCheckpoint(monitor='val_loss', save_top_k=1, mode="min", dirpath="Data/chpts",
@@ -89,10 +92,10 @@ def main(args):
         wandb_logger.experiment.config['experiment'] = experiment_name
 
         trainer = pl.Trainer(
-            precision=16 if args.half_precision else 32,
+            precision='16-mixed' if args.half_precision else 32,
             max_epochs=args.epochs,
             accelerator='gpu' if device == torch.device('cuda') else 'cpu',
-            devices=1 ,#if device == torch.device('cuda') else None,
+            devices=1 ,
             callbacks=[early_stop_callback, best_checkpoint],
             num_sanity_val_steps=0,
             logger=wandb_logger,
@@ -110,6 +113,19 @@ def main(args):
         wandb_logger.finalize('success')
         wandb.finish()
 
+def seed_all(seed):
+    if not seed:
+        seed = 10
+    # torch.use_deterministic_algorithms(True)
+    # os.environ['CUBLAS_WORKSPACE_CONFIG']=":4096:8"
+    print("[ Using Seed : ", seed, " ]")
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 if __name__ == '__main__':
+    seed_all(42)
     args = init_parser()
     main(args)

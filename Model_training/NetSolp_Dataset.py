@@ -1,11 +1,13 @@
+from pathlib import Path
+
+import h5py
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-from utils.constants import seq_encoding_enum, mode_enum
-import h5py
 from tqdm import tqdm
-import numpy as np
-from pathlib import Path
+
+from utils.constants import seq_encoding_enum, mode_enum
 
 
 class NetsolpDataset(Dataset):
@@ -19,7 +21,7 @@ class NetsolpDataset(Dataset):
             raise ValueError('path_to_embedds must be defined when trying to use embeddings')
 
         # load all files
-        if seq_encoding == seq_encoding_enum.seq:
+        if seq_encoding == seq_encoding.seq:
             solubility_data = self._read_csv(path_to_seq_data).values.tolist()
             solubility_data = [(data_tuple[0], data_tuple[2], data_tuple[1], data_tuple[3]) for data_tuple in solubility_data]
         else:
@@ -116,6 +118,8 @@ class NetsolpDataset(Dataset):
 
     def __getitem__(self, index):
         return self.data[index]
+
+
 
 
 if __name__ == "__main__":

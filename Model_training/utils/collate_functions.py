@@ -13,3 +13,9 @@ def my_collate(batch):
     sol = torch.unsqueeze(torch.tensor(batch_unzipped[1]),1)
 
     return embedds, sol
+
+def collate_seq(batch):
+    batch_unzipped = list(zip(*batch))
+    sol = torch.unsqueeze(torch.tensor(batch_unzipped[1]), 1)
+
+    return batch_unzipped[0],sol
