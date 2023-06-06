@@ -16,10 +16,18 @@ class fine_tune_t5(BaseModel):
         self.dropout = nn.Dropout(args.drop)
         model_name = r'Rostlab/prot_t5_xl_uniref50'
         self.plm_model = T5EncoderModel.from_pretrained(model_name)
+        # freeze the grad
         self.plm_model.requires_grad_(False)
         self.tokenizer = T5Tokenizer.from_pretrained(model_name, do_lower_case=False)
 
+        # imnplement a stepped learning rate
+        # implement batch norm and
+        # implement grad clipping
     def forward(self, sequences):
+        # unfreeze layers based on epoch
+        if self.current_epoch == 1:
+            params = [x for x in self.plm_model.parameters()]
+            params[-1].requires_grad()
 
         sequences = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequences]
         ids = self.tokenizer.batch_encode_plus(sequences, add_special_tokens=True, padding="longest")
