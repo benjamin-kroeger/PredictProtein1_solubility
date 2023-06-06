@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 import torch
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, GradientAccumulationScheduler
 from pytorch_lightning.loggers import WandbLogger
 
 from Model_training.models.base_model import BaseModel
@@ -79,12 +79,18 @@ def main(args):
         # init the model and send it to the device
         model = globals()[args.model](args=args, train_set=train_data_set, val_set=val_data_set)
         model.to(device)
-        if args.half_precision:
-            model.half()
+
+        callbacks = []
         # set up early stopping and storage of the best model
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min")
+        callbacks.append(early_stop_callback)
         best_checkpoint = ModelCheckpoint(monitor='val_loss', save_top_k=1, mode="min", dirpath="Data/chpts",
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
+        callbacks.append(best_checkpoint)
+        if args.acc_grad:
+            accumulator = GradientAccumulationScheduler(scheduling={0:1,1: 8, 4: 4, 8: 1})
+            callbacks.append(accumulator)
+
         # set up a logger
         wandb_logger = WandbLogger(name=f'{experiment_name}_{fold}', project='pp1_test')
         wandb_logger.watch(model)
@@ -95,13 +101,10 @@ def main(args):
             precision='16-mixed' if args.half_precision else 32,
             max_epochs=args.epochs,
             accelerator='gpu' if device == torch.device('cuda') else 'cpu',
-            devices=1 ,
-            callbacks=[early_stop_callback, best_checkpoint],
+            devices=1,
+            callbacks=callbacks,
             num_sanity_val_steps=0,
             logger=wandb_logger,
-            accumulate_grad_batches={0: 10,
-                                     4: 5,
-                                     8: 1} if args.acc_grad else 1,
             log_every_n_steps=3
         )
         # train the model
