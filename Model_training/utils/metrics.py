@@ -6,6 +6,11 @@ def compute_metrics(y_true, y_pred_prob) -> dict:
     if isinstance(y_pred_prob, torch.Tensor):
         y_pred_prob = y_pred_prob.cpu().numpy()
 
+    try:
+        roc_score = roc_auc_score(y_true=y_true, y_score=y_pred_prob)
+    except ValueError:
+        roc_score = 0.5
+
     y_pred = (y_pred_prob > 0.5).astype(int)
     metric_dict = {
         'acc': accuracy_score(y_true=y_true, y_pred=y_pred),
@@ -13,7 +18,7 @@ def compute_metrics(y_true, y_pred_prob) -> dict:
         'f1': f1_score(y_true=y_true, y_pred=y_pred),
         'recall': recall_score(y_true=y_true, y_pred=y_pred),
         'precision': precision_score(y_true=y_true, y_pred=y_pred),
-        'auc': roc_auc_score(y_true=y_true, y_score=y_pred_prob),
+        'auc': roc_score,
         'mcc': matthews_corrcoef(y_true=y_true, y_pred=y_pred)
     }
 
