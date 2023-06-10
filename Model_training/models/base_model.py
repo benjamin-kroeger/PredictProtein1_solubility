@@ -84,14 +84,14 @@ class BaseModel(pl.LightningModule):
 
     def val_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
                                                num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker)
         if self.seq_encoding == seq_encoding_enum.pa:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
                                                num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker)
 
         if self.seq_encoding == seq_encoding_enum.seq:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
                                                num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
 
     def test_dataloader(self):
