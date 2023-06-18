@@ -6,7 +6,7 @@ import torch
 from transformers import T5EncoderModel, T5Tokenizer
 import re
 from Model_training.utils.constants import seq_encoding_enum
-
+from .LoRA import LoRALinear,modify_with_lora
 
 class fine_tune_t5(BaseModel):
     seq_encoding = seq_encoding_enum.seq
@@ -93,4 +93,53 @@ class fine_tune_t5(BaseModel):
         # Define the learning rate scheduler
         scheduler = torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=lr_lambda)
 
-        return [optim],[{"scheduler": scheduler,"interval": "epoch"}]
+        return [optim], [{"scheduler": scheduler, "interval": "epoch"}]
+
+
+class LoRAConfig:
+    def __init__(self):
+        self.lora_rank = 2
+        self.lora_init_scale = 0.01
+        self.lora_modules = ".*SelfAttention|.*EncDecAttention"
+        self.lora_layers = "q|k|v|o"
+        self.trainable_param_names = ".*layer_norm.*|.*lora_[ab].*"
+        self.lora_scaling_rank = 1
+
+
+class fine_tune_lora(BaseModel):
+    seq_encoding = seq_encoding_enum.seq
+    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None):
+        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set)
+
+        self.final_linear = nn.Linear(in_features=1024, out_features=1)
+
+        config = LoRAConfig()
+        model_name = r'Rostlab/prot_t5_xl_uniref50'
+        self.plm_model = T5EncoderModel.from_pretrained(model_name).requires_grad_(False)
+        self.tokenizer = T5Tokenizer.from_pretrained(model_name, do_lower_case=False)
+
+        self.plm_model = modify_with_lora(self.plm_model,config)
+
+
+    def forward(self, sequences):
+
+        sequences = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequences]
+        ids = self.tokenizer.batch_encode_plus(sequences, add_special_tokens=True, padding="longest")
+        input_ids = torch.tensor(ids['input_ids']).to(self.device)
+        attention_mask = torch.tensor(ids['attention_mask']).to(self.device)
+
+        embedding_repr = self.plm_model(input_ids=input_ids, attention_mask=attention_mask)
+
+        return_tensor = []
+        for i in range(len(sequences)):
+            return_tensor.append(embedding_repr.last_hidden_state[i, :sum(attention_mask[i])].mean(axis=0))
+
+        pa_embedds = torch.stack(return_tensor)
+
+        droped = self.dropout(pa_embedds)
+        output = self.model(droped)
+
+        return output
+
+
+
