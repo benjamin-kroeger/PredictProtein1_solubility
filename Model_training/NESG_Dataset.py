@@ -45,8 +45,8 @@ class NESGDataset(Dataset):
         dataset = []
         for emb in embeddings:
             if emb[0] in csv["sid"].tolist():
-                _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
-                dataset.append((emb[0], emb[1], torch.tensor(sol).to(dtype), partition))
+                _, sol, fasta = csv[csv["sid"] == emb[0]].iloc[0]
+                dataset.append((emb[0], emb[1], torch.tensor(sol).to(dtype)))
         return dataset
 
     def _drop_unnecessary(self, dataset: list[tuple[int, torch.tensor, float, str, float]]) -> list[tuple]:
