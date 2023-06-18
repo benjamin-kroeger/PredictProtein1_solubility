@@ -11,8 +11,8 @@ from .LoRA import LoRALinear,modify_with_lora
 class fine_tune_t5(BaseModel):
     seq_encoding = seq_encoding_enum.seq
 
-    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None):
-        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set)
+    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
+        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
 
         self.model = nn.Linear(in_features=1024, out_features=1)
         self.dropout = nn.Dropout(args.drop)
@@ -108,8 +108,9 @@ class LoRAConfig:
 
 class fine_tune_lora(BaseModel):
     seq_encoding = seq_encoding_enum.seq
-    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None):
-        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set)
+
+    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
+        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
 
         self.final_linear = nn.Linear(in_features=1024, out_features=1)
 

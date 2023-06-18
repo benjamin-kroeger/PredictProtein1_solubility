@@ -87,7 +87,7 @@ def main(args):
     best_val_loss = 5
 
     # initialize 5 fold cross validation
-    for fold in range(5):
+    for fold in range(1):
         train_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.train, val_partion=fold, dtype=dtype,
                                         path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
         val_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.val, val_partion=fold, dtype=dtype,
@@ -141,16 +141,23 @@ def main(args):
 
         # set up a logger
         wandb_logger = WandbLogger(name=f'{experiment_name}_TEST', entity='pp1-solubility', project='solubility-prediction')
-        wandb_logger.watch(model)
         # add experiment name so that we can group runs in wandb
         wandb_logger.experiment.config['experiment'] = experiment_name
 
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        trainer = pl.Trainer(
+            precision='16-mixed' if args.half_precision else 32,
+            accelerator='gpu' if device == torch.device('cuda') else 'cpu',
+            devices=1,
+            logger=wandb_logger,
+            log_every_n_steps=3
+        )
 
         for ids, _ in kf.split(pd.read_csv(args.test_solubility_data)):
             test_Dataset = NESGDataset(seq_encoding=seq_encoding,dtype=dtype,path_to_seq_data=args.test_solubility_data,path_to_embedds=args.test_protein_embedds)
-            model = globals()[args.model](args=args, test_set=test_Dataset)
-            trainer.
+            sampler = torch.utils.data.SubsetRandomSampler(ids)
+            model = globals()[args.model](args=args, test_set=test_Dataset,sampler=sampler)
+
             trainer.test(model=model,ckpt_path=best_checkpoint_path)
 
 
@@ -158,10 +165,6 @@ def main(args):
 
     # TODO: add test run for best checkpoint with boot strapping
 
-
-
-def test_best_model():
-    pass
 
 def seed_all(seed):
     if not seed:

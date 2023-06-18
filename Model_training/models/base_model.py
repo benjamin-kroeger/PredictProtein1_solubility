@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import Dataset
 
-from Model_training.utils.collate_functions import collate_pp,collate_seq,collate_pa
+from Model_training.utils.collate_functions import collate_pp, collate_seq, collate_pa
 from Model_training.utils.constants import seq_encoding_enum
 from Model_training.utils.metrics import compute_metrics
 
@@ -20,17 +20,21 @@ def seed_worker(worker_id):
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
+
 class BaseModel(pl.LightningModule):
     seq_encoding = seq_encoding_enum.pp
 
-    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None):
+    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
         super().__init__()
         self.val_outputs = defaultdict(list)
+        self.test_outputs = defaultdict(list)
 
         self.save_hyperparameters(args)
         self.train_set = train_set
         self.val_set = val_set
+
         self.test_set = test_set
+        self.sampler = sampler
 
         self.args = args
 
@@ -71,26 +75,25 @@ class BaseModel(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
         for key, value in metric_dict.items():
-            self.val_outputs[key].append(value)
+            self.test_outputs[key].append(value)
         return metric_dict
-        pass
 
     def on_test_epoch_end(self) -> None:
-        for key, value in self.val_outputs.items():
+        for key, value in self.test_outputs.items():
             self.log(key, torch.tensor(value).mean())
         self.val_outputs = defaultdict(list)
-        pass
+
 
     def train_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker,drop_last=True)
+                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker, drop_last=True)
         if self.seq_encoding == seq_encoding_enum.pa:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker,drop_last=True)
+                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker, drop_last=True)
         if self.seq_encoding == seq_encoding_enum.seq:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker,drop_last=True)
+                                               num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker, drop_last=True)
 
     def val_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
@@ -107,21 +110,22 @@ class BaseModel(pl.LightningModule):
     def test_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
             return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker)
+                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker,
+                                               sampler=self.sampler)
         if self.seq_encoding == seq_encoding_enum.pa:
             return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker)
-
+                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker,
+                                               sampler=self.sampler)
         if self.seq_encoding == seq_encoding_enum.seq:
             return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
+                                               num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker,
+                                               sampler=self.sampler)
 
     def configure_optimizers(self):
 
         params = self.parameters()
 
         optim = torch.optim.Adam(params=params, betas=(0.9, 0.999), lr=self.args.lr, weight_decay=self.args.reg)
-        #scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, gamma=self.opt.gamma)
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, gamma=self.opt.gamma)
 
-        return [optim] #, [scheduler]
-
+        return [optim]  # , [scheduler]
