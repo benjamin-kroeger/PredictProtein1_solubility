@@ -8,7 +8,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Model_training.models.base_model import BaseModel
 from Model_training.models.lin_models import *
-from Model_training.models.fine_tune import fine_tune_t5
+from Model_training.models.fine_tune import fine_tune_t5,fine_tune_lora
 from NetSolp_Dataset import NetsolpDataset
 from utils.constants import seq_encoding_enum, mode_enum
 import pytorch_lightning as pl
@@ -95,7 +95,7 @@ def main(args):
             callbacks.append(accumulator)
 
         # set up a logger
-        wandb_logger = WandbLogger(name=f'{experiment_name}_{fold}', project='pp1_test')
+        wandb_logger = WandbLogger(name=f'{experiment_name}_{fold}',entity='pp1-solubility', project='solubility-prediction')
         wandb_logger.watch(model)
         # add experiment name so that we can group runs in wandb
         wandb_logger.experiment.config['experiment'] = experiment_name
