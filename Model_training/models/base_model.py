@@ -68,7 +68,10 @@ class BaseModel(pl.LightningModule):
 
         self.val_outputs = defaultdict(list)
 
-    def test_step(self):
+    def test_step(self, batch, batch_idx):
+        pass
+
+    def on_test_epoch_end(self) -> None:
         pass
 
     def train_dataloader(self):
@@ -95,7 +98,16 @@ class BaseModel(pl.LightningModule):
                                                num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
 
     def test_dataloader(self):
-        pass
+        if self.seq_encoding == seq_encoding_enum.pp:
+            return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker)
+        if self.seq_encoding == seq_encoding_enum.pa:
+            return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker)
+
+        if self.seq_encoding == seq_encoding_enum.seq:
+            return torch.utils.data.DataLoader(self.test_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
 
     def configure_optimizers(self):
 

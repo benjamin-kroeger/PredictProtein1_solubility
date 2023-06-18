@@ -92,9 +92,9 @@ class NESGDataset(Dataset):
 
 
 if __name__ == "__main__":
-    d = NESGDataset(seq_encoding_enum.pp, torch.float32,
-                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
-                       "/Data/train_embedds_pp.h5")
+    d = NESGDataset(seq_encoding_enum.seq, torch.float32,
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/NESG_testset_formatted.csv",
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/test_embedds_pp.h5")
 
     print(d.__getitem__(1))
     print(len(d))
