@@ -51,6 +51,11 @@ class BaseModel(pl.LightningModule):
             metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
             metric_dict['val_loss'] = loss
             return metric_dict
+
+        if mode == 'test':
+            metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
+            metric_dict['test_loss'] = loss
+            return metric_dict
         if mode == 'train':
             return {'loss': loss}
 
@@ -73,7 +78,7 @@ class BaseModel(pl.LightningModule):
         self.val_outputs = defaultdict(list)
 
     def test_step(self, batch, batch_idx):
-        metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
+        metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='test')
         for key, value in metric_dict.items():
             self.test_outputs[key].append(value)
         return metric_dict
@@ -81,7 +86,7 @@ class BaseModel(pl.LightningModule):
     def on_test_epoch_end(self) -> None:
         for key, value in self.test_outputs.items():
             self.log(key, torch.tensor(value).mean())
-        self.val_outputs = defaultdict(list)
+        self.test_outputs = defaultdict(list)
 
 
     def train_dataloader(self):

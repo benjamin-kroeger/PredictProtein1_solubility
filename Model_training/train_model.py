@@ -16,6 +16,8 @@ from NESG_Dataset import NESGDataset
 from utils.constants import seq_encoding_enum, mode_enum
 import pytorch_lightning as pl
 import wandb
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def init_parser():
     # Settings
@@ -46,11 +48,11 @@ def init_parser():
                         help='Model architecture')
 
     # arguments required for testing
-    parser.add_argument('--test_model', action='store_true', default=False,
+    parser.add_argument('--test_model', action='store_true', default=False,required=False,
                         help='Once the final model Architecture is decided this can be used to train it and test it')
-    parser.add_argument('--test_solubility_data', type=str, required=True,
+    parser.add_argument('--test_solubility_data', type=str, required=False,
                         help='Path to the solubility file')
-    parser.add_argument('--test_protein_embedds', type=str, required=True,
+    parser.add_argument('--test_protein_embedds', type=str, required=False,
                         help='Path to the protein embeddings')
 
 
@@ -87,7 +89,7 @@ def main(args):
     best_val_loss = 5
 
     # initialize 5 fold cross validation
-    for fold in range(1):
+    for fold in range(5):
         train_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.train, val_partion=fold, dtype=dtype,
                                         path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
         val_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.val, val_partion=fold, dtype=dtype,
@@ -153,17 +155,21 @@ def main(args):
             log_every_n_steps=3
         )
 
+        test_metrics = []
+
         for ids, _ in kf.split(pd.read_csv(args.test_solubility_data)):
             test_Dataset = NESGDataset(seq_encoding=seq_encoding,dtype=dtype,path_to_seq_data=args.test_solubility_data,path_to_embedds=args.test_protein_embedds)
             sampler = torch.utils.data.SubsetRandomSampler(ids)
             model = globals()[args.model](args=args, test_set=test_Dataset,sampler=sampler)
 
-            trainer.test(model=model,ckpt_path=best_checkpoint_path)
+            test_results = trainer.test(model=model,ckpt_path=best_checkpoint_path)
+            test_metrics.extend(list(test_results[0].items()))
 
+        test_metrics = pd.DataFrame(data=test_metrics,columns=['metric','value'])
+        test_metrics.to_csv('Blub.csv')
+        sns.barplot(data=test_metrics,x='metric',y='value',errorbar='se')
+        plt.show()
 
-
-
-    # TODO: add test run for best checkpoint with boot strapping
 
 
 def seed_all(seed):

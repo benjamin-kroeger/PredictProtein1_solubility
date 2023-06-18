@@ -98,7 +98,7 @@ class fine_tune_t5(BaseModel):
 
 class LoRAConfig:
     def __init__(self):
-        self.lora_rank = 2
+        self.lora_rank = 1
         self.lora_init_scale = 0.01
         self.lora_modules = ".*SelfAttention|.*EncDecAttention"
         self.lora_layers = "q|k|v|o"
