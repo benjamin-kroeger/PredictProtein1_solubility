@@ -69,9 +69,16 @@ class BaseModel(pl.LightningModule):
         self.val_outputs = defaultdict(list)
 
     def test_step(self, batch, batch_idx):
+        metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
+        for key, value in metric_dict.items():
+            self.val_outputs[key].append(value)
+        return metric_dict
         pass
 
     def on_test_epoch_end(self) -> None:
+        for key, value in self.val_outputs.items():
+            self.log(key, torch.tensor(value).mean())
+        self.val_outputs = defaultdict(list)
         pass
 
     def train_dataloader(self):
