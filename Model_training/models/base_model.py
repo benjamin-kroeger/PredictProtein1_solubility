@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import Dataset
 
-from Model_training.utils.collate_functions import my_collate,collate_seq
+from Model_training.utils.collate_functions import collate_pp,collate_seq,collate_pa
 from Model_training.utils.constants import seq_encoding_enum
 from Model_training.utils.metrics import compute_metrics
 
@@ -74,23 +74,24 @@ class BaseModel(pl.LightningModule):
     def train_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers,collate_fn=my_collate,worker_init_fn=seed_worker)
+                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker)
         if self.seq_encoding == seq_encoding_enum.pa:
-            # TODO: Implement dataloader with the right collate function
-            raise NotImplementedError
+            return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker)
         if self.seq_encoding == seq_encoding_enum.seq:
             return torch.utils.data.DataLoader(self.train_set, shuffle=True, batch_size=self.args.batch_size, pin_memory=True,
                                                num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
 
     def val_dataloader(self):
         if self.seq_encoding == seq_encoding_enum.pp:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
-                                               num_workers=self.args.num_workers,collate_fn=my_collate,worker_init_fn=seed_worker)
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_pp, worker_init_fn=seed_worker)
         if self.seq_encoding == seq_encoding_enum.pa:
-            # TODO: Implement dataloader with the right collate function
-            raise NotImplementedError
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+                                               num_workers=self.args.num_workers, collate_fn=collate_pa, worker_init_fn=seed_worker)
+
         if self.seq_encoding == seq_encoding_enum.seq:
-            return torch.utils.data.DataLoader(self.train_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
+            return torch.utils.data.DataLoader(self.val_set, shuffle=False, batch_size=self.args.batch_size, pin_memory=True,
                                                num_workers=self.args.num_workers, collate_fn=collate_seq, worker_init_fn=seed_worker)
 
     def test_dataloader(self):

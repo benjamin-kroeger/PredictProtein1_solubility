@@ -125,7 +125,7 @@ class NetsolpDataset(Dataset):
 if __name__ == "__main__":
     d = NetsolpDataset(seq_encoding_enum.pp, mode_enum.val, 1, torch.float32,
                        "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
-                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/output_pp.h5")
+                       "/Data/train_embedds_pp.h5")
 
     print(d.__getitem__(1))
     print(len(d))

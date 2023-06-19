@@ -41,6 +41,8 @@ def init_parser():
                         help='Set maxs number of epochs.')
     parser.add_argument('--model', type=str, required=True, default="Regressor_Simple",
                         help='Model architecture')
+    parser.add_argument('--test_model', action='store_true', default=False,
+                        help='Once the final model Architecture is decided this can be used to train it and test it')
 
     # Performance related arguments
     parser.add_argument('--num_workers', type=int, required=False, default=8,
@@ -76,6 +78,7 @@ def main(args):
                                         path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
         val_data_set = NetsolpDataset(seq_encoding=seq_encoding, set_mode=mode_enum.val, val_partion=fold, dtype=dtype,
                                       path_to_seq_data=args.solubility_data, path_to_embedds=args.protein_embedds)
+
         # init the model and send it to the device
         model = globals()[args.model](args=args, train_set=train_data_set, val_set=val_data_set)
         model.to(device)
@@ -116,6 +119,9 @@ def main(args):
         wandb_logger.finalize('success')
         wandb.finish()
 
+def test_best_model():
+    pass
+
 def seed_all(seed):
     if not seed:
         seed = 10
@@ -131,4 +137,7 @@ def seed_all(seed):
 if __name__ == '__main__':
     seed_all(42)
     args = init_parser()
-    main(args)
+    if args.test_model:
+        test_best_model()
+    else:
+        main(args)
