@@ -45,8 +45,8 @@ class NESGDataset(Dataset):
         dataset = []
         for emb in embeddings:
             if emb[0] in csv["sid"].tolist():
-                _, sol, fasta, partition = csv[csv["sid"] == emb[0]].iloc[0]
-                dataset.append((emb[0], emb[1], torch.tensor(sol).to(dtype), partition))
+                _, sol, fasta = csv[csv["sid"] == emb[0]].iloc[0]
+                dataset.append((emb[0], emb[1], torch.tensor(sol).to(dtype)))
         return dataset
 
     def _drop_unnecessary(self, dataset: list[tuple[int, torch.tensor, float, str, float]]) -> list[tuple]:
@@ -92,9 +92,9 @@ class NESGDataset(Dataset):
 
 
 if __name__ == "__main__":
-    d = NESGDataset(seq_encoding_enum.pp, torch.float32,
-                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv",
-                       "/Data/train_embedds_pp.h5")
+    d = NESGDataset(seq_encoding_enum.seq, torch.float32,
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/NESG_testset_formatted.csv",
+                       "/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/test_embedds_pp.h5")
 
     print(d.__getitem__(1))
     print(len(d))

@@ -7,7 +7,7 @@ from tqdm import tqdm
 from pathlib import Path
 import re
 
-sol_df = pd.read_csv(r'/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/PSI_Biology_solubility_trainset.csv')
+sol_df = pd.read_csv(r'/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/NESG_testset_formatted.csv')
 
 model_name = r'Rostlab/prot_t5_xl_uniref50'
 # load the model in half precision
@@ -51,10 +51,10 @@ def store_in_h5(header,embedding_tensors,filename):
 
 ids = sol_df['sid'].tolist()
 seqs = sol_df['fasta'].tolist()
-output_h5_file_pp = '/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/output_pp.h5'
-output_h5_file_pa = '/home/benjaminkroeger/Documents/Master/Master_2_Semester/Predictprotein2/predictprotein1_solubility/Data/output_pa.h5'
+output_h5_file_pp = '../Data/test_embedds_pp.h5'
+output_h5_file_pa = '../Data/test_embedds_pa.h5'
 
-for id,fasta in tqdm(zip(ids,seqs)):
+for id,fasta in tqdm(zip(ids,seqs),total=len(ids)):
     tensor = create_embeddings(sequences=[fasta],tokenizer=tokenizer,model=model,device=device)
     store_in_h5(header=id,embedding_tensors=tensor.cpu(),filename=output_h5_file_pa)
     store_in_h5(header=id,embedding_tensors=tensor.cpu().mean(axis=0),filename=output_h5_file_pp)
