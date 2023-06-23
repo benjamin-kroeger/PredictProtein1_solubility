@@ -8,8 +8,10 @@ import re
 from Model_training.utils.constants import seq_encoding_enum
 from .LoRA import LoRALinear,modify_with_lora
 
+
 class fine_tune_t5(BaseModel):
     seq_encoding = seq_encoding_enum.seq
+
 
     def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
         super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
@@ -88,6 +90,7 @@ class fine_tune_t5(BaseModel):
 
         return output
 
+
     def configure_optimizers(self):
 
         params = self.parameters()
@@ -153,4 +156,20 @@ class fine_tune_lora(BaseModel):
         return output
 
 
+    def configure_optimizers(self):
+
+        params = self.parameters()
+
+        optim = torch.optim.Adam(params=params, betas=(0.9, 0.999), lr=self.args.lr, weight_decay=self.args.reg)
+
+        def lr_lambda(epoch):
+            if epoch in self.lr_schedule:
+                return self.lr_schedule[epoch]
+            else:
+                return self.args.lr
+
+        # Define the learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=lr_lambda)
+
+        return [optim],[{"scheduler": scheduler,"interval": "epoch"}]
 

@@ -130,6 +130,7 @@ def main(args):
         trainer.fit(model)
         # load the best model and run one final validation
         best_model_path = trainer.checkpoint_callback.best_model_path
+        # best_model_path = "Data/chpts/testing_chpts"
         result = trainer.validate(ckpt_path=best_model_path)
         # if the last model was the best model yet store the path to the checkoint
         if result[0]['val_loss'] < best_val_loss:
@@ -138,6 +139,9 @@ def main(args):
         wandb_logger.finalize('success')
         wandb.finish()
 
+
+def test_best_model():
+    pass
 
     if args.test_model:
 
@@ -187,4 +191,7 @@ def seed_all(seed):
 if __name__ == '__main__':
     seed_all(42)
     args = init_parser()
-    main(args)
+    if args.test_model:
+        test_best_model()
+    else:
+        main(args)
