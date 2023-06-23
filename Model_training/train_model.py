@@ -27,7 +27,7 @@ def init_parser():
     # Data related arguments
     parser.add_argument('--solubility_data', type=str, required=True,
                         help='Path to the solubility file')
-    parser.add_argument('--protein_embedds', type=str, required=True,
+    parser.add_argument('--protein_embedds', type=str, required=False,
                         help='Path to the protein embeddings')
     # Training related arguments
     parser.add_argument('--batch_size', type=int, required=False, default=8,
@@ -107,7 +107,7 @@ def main(args):
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
         callbacks.append(best_checkpoint)
         if args.acc_grad:
-            accumulator = GradientAccumulationScheduler(scheduling={0:1,1: 8, 4: 4, 8: 1})
+            accumulator = GradientAccumulationScheduler(scheduling={0:15,1: 20, 4: 20, 8: 15})
             callbacks.append(accumulator)
 
         # set up a logger
@@ -166,7 +166,7 @@ def main(args):
             test_metrics.extend(list(test_results[0].items()))
 
         test_metrics = pd.DataFrame(data=test_metrics,columns=['metric','value'])
-        test_metrics.to_csv('Blub.csv')
+        test_metrics.to_csv(f'{args.model}_test_metrics.csv')
         sns.barplot(data=test_metrics,x='metric',y='value',errorbar='se')
         plt.show()
 

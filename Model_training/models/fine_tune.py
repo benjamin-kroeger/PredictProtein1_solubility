@@ -37,7 +37,9 @@ class fine_tune_t5(BaseModel):
             13: 0.0009,
             14: 0.001
         }
-        self.unfroze = False
+        self.unfroze1 = False
+        self.unfroze2 = False
+        self.unfroze3 = False
 
         # imnplement a stepped learning rate
         # implement batch norm and
@@ -45,10 +47,18 @@ class fine_tune_t5(BaseModel):
 
     def training_step(self, batch, batch_idx):
         # unfreeze layers based on epoch
-        if self.current_epoch == 4 and not self.unfroze:
+        if self.current_epoch == 4 and not self.unfroze1:
             params = [x for x in self.plm_model.parameters()]
             params[-1].requires_grad_()
-            self.unfroze = True
+            self.unfroze1 = True
+        if self.current_epoch == 5 and not self.unfroze2:
+            params = [x for x in self.plm_model.parameters()]
+            params[-2].requires_grad_()
+            self.unfroze2 = True
+        if self.current_epoch == 6 and not self.unfroze3:
+            params = [x for x in self.plm_model.parameters()]
+            params[-3].requires_grad_()
+            self.unfroze3 = True
 
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='train')
         self.log_dict(metric_dict)

@@ -65,6 +65,11 @@ class BaseModel(pl.LightningModule):
 
         return metric_dict
 
+    def on_train_epoch_start(self):
+
+        tainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        self.log('trainable_parameters',tainable_params)
+
     def validation_step(self, batch, batch_idx):
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
         for key, value in metric_dict.items():
