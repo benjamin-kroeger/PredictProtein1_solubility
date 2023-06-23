@@ -46,8 +46,6 @@ def init_parser():
                         help='Set maxs number of epochs.')
     parser.add_argument('--model', type=str, required=True, default="Regressor_Simple",
                         help='Model architecture')
-    parser.add_argument('--test_model', action='store_true', default=False,
-                        help='Once the final model Architecture is decided this can be used to train it and test it')
 
     # arguments required for testing
     parser.add_argument('--test_model', action='store_true', default=False,required=False,
@@ -132,6 +130,7 @@ def main(args):
         trainer.fit(model)
         # load the best model and run one final validation
         best_model_path = trainer.checkpoint_callback.best_model_path
+        # best_model_path = "Data/chpts/testing_chpts"
         result = trainer.validate(ckpt_path=best_model_path)
         # if the last model was the best model yet store the path to the checkoint
         if result[0]['val_loss'] < best_val_loss:
