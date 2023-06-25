@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold
 
 from Model_training.models.base_model import BaseModel
 from Model_training.models.lin_models import *
-from Model_training.models.fine_tune import fine_tune_t5,fine_tune_lora
+from Model_training.models.fine_tune import fine_tune_t5, fine_tune_lora
 from NetSolp_Dataset import NetsolpDataset
 from NESG_Dataset import NESGDataset
 from utils.constants import seq_encoding_enum, mode_enum
@@ -18,6 +18,7 @@ import pytorch_lightning as pl
 import wandb
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 
 def init_parser():
     # Settings
@@ -48,13 +49,12 @@ def init_parser():
                         help='Model architecture')
 
     # arguments required for testing
-    parser.add_argument('--test_model', action='store_true', default=False,required=False,
+    parser.add_argument('--test_model', action='store_true', default=False, required=False,
                         help='Once the final model Architecture is decided this can be used to train it and test it')
     parser.add_argument('--test_solubility_data', type=str, required=False,
                         help='Path to the solubility file')
     parser.add_argument('--test_protein_embedds', type=str, required=False,
                         help='Path to the protein embeddings')
-
 
     # Performance related arguments
     parser.add_argument('--num_workers', type=int, required=False, default=8,
@@ -65,7 +65,6 @@ def init_parser():
     args = parser.parse_args()
 
     return args
-
 
 
 def main(args):
@@ -107,11 +106,11 @@ def main(args):
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
         callbacks.append(best_checkpoint)
         if args.acc_grad:
-            accumulator = GradientAccumulationScheduler(scheduling={0:15,1: 20, 4: 20, 8: 15})
+            accumulator = GradientAccumulationScheduler(scheduling={0: 15, 1: 20, 4: 20, 8: 15})
             callbacks.append(accumulator)
 
         # set up a logger
-        wandb_logger = WandbLogger(name=f'{experiment_name}_{fold}',entity='pp1-solubility', project='solubility-prediction')
+        wandb_logger = WandbLogger(name=f'{experiment_name}_{fold}', entity='pp1-solubility', project='solubility-prediction')
         wandb_logger.watch(model)
         # add experiment name so that we can group runs in wandb
         wandb_logger.experiment.config['experiment'] = experiment_name
@@ -139,10 +138,6 @@ def main(args):
         wandb_logger.finalize('success')
         wandb.finish()
 
-
-def test_best_model():
-    pass
-
     if args.test_model:
 
         # set up a logger
@@ -162,18 +157,18 @@ def test_best_model():
         test_metrics = []
 
         for ids, _ in kf.split(pd.read_csv(args.test_solubility_data)):
-            test_Dataset = NESGDataset(seq_encoding=seq_encoding,dtype=dtype,path_to_seq_data=args.test_solubility_data,path_to_embedds=args.test_protein_embedds)
+            test_Dataset = NESGDataset(seq_encoding=seq_encoding, dtype=dtype, path_to_seq_data=args.test_solubility_data,
+                                       path_to_embedds=args.test_protein_embedds)
             sampler = torch.utils.data.SubsetRandomSampler(ids)
-            model = globals()[args.model](args=args, test_set=test_Dataset,sampler=sampler)
+            model = globals()[args.model](args=args, test_set=test_Dataset, sampler=sampler)
 
-            test_results = trainer.test(model=model,ckpt_path=best_checkpoint_path)
+            test_results = trainer.test(model=model, ckpt_path=best_checkpoint_path)
             test_metrics.extend(list(test_results[0].items()))
 
-        test_metrics = pd.DataFrame(data=test_metrics,columns=['metric','value'])
+        test_metrics = pd.DataFrame(data=test_metrics, columns=['metric', 'value'])
         test_metrics.to_csv(f'{args.model}_test_metrics.csv')
-        sns.barplot(data=test_metrics,x='metric',y='value',errorbar='se')
+        sns.barplot(data=test_metrics, x='metric', y='value', errorbar='se')
         plt.show()
-
 
 
 def seed_all(seed):
@@ -188,10 +183,8 @@ def seed_all(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+
 if __name__ == '__main__':
     seed_all(42)
     args = init_parser()
-    if args.test_model:
-        test_best_model()
-    else:
-        main(args)
+    main(args)
