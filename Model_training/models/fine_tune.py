@@ -156,20 +156,3 @@ class fine_tune_lora(BaseModel):
         return output
 
 
-    def configure_optimizers(self):
-
-        params = self.parameters()
-
-        optim = torch.optim.Adam(params=params, betas=(0.9, 0.999), lr=self.args.lr, weight_decay=self.args.reg)
-
-        def lr_lambda(epoch):
-            if epoch in self.lr_schedule:
-                return self.lr_schedule[epoch]
-            else:
-                return self.args.lr
-
-        # Define the learning rate scheduler
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=lr_lambda)
-
-        return [optim],[{"scheduler": scheduler,"interval": "epoch"}]
-
