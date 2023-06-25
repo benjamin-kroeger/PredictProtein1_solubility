@@ -1,6 +1,6 @@
 io:
-    outputOverwriteFile: stdout.log
-    errorOverwriteFile: stderr.log
+    outputOverwriteFile: stdout_lora.log
+    errorOverwriteFile: stderr_lora.log
 limit:
     coreLimit: 5
     # in hh:mm
@@ -8,7 +8,7 @@ limit:
     # Limit the execution to 8GB of CPU RAM
     memLimit: 8G!
 resource:
-    gpu: num=1/task:mode=shared:gmem=16G:j_exclusive=no:gpack=yes
+    gpu: num=1/task:mode=shared:gmem=12G:j_exclusive=no:gpack=yes
 
 properties:
     queueName: mid-end-normal
@@ -16,4 +16,4 @@ properties:
 command: |
     #!/bin/bash
     export PYTHONPATH=$PYTHONPATH:/mnt/project/kroeger/predictprotein1_solubility
-    python3 Model_training/train_model.py --solubility_data Data/PSI_Biology_solubility_trainset.csv --model fine_tune_lora --epochs 50 --batch_size 60 
+    python3 Model_training/train_model.py --solubility_data Data/PSI_Biology_solubility_trainset.csv --model fine_tune_lora --epochs 50 --batch_size 30 

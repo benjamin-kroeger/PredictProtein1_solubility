@@ -106,7 +106,7 @@ def main(args):
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
         callbacks.append(best_checkpoint)
         if args.acc_grad:
-            accumulator = GradientAccumulationScheduler(scheduling={0: 15, 1: 20, 4: 20, 8: 15})
+            accumulator = GradientAccumulationScheduler(scheduling={0: 2})
             callbacks.append(accumulator)
 
         # set up a logger
