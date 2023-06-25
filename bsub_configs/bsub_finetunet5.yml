@@ -12,7 +12,7 @@ resource:
 
 properties:
     queueName: mid-end-normal
-    jobName: pp1sol_train_job
+    jobName: pp1sol_train_job_t5
 command: |
     #!/bin/bash
     export PYTHONPATH=$PYTHONPATH:/mnt/project/kroeger/predictprotein1_solubility
