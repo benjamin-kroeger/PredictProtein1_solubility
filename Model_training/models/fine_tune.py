@@ -148,7 +148,7 @@ class fine_tune_lora(BaseModel):
 
         pa_embedds = torch.stack(return_tensor)
 
-        output = self.model(pa_embedds)
+        output = self.final_linear(pa_embedds)
 
         return output
 
