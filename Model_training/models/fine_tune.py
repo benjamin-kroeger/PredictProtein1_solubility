@@ -17,7 +17,6 @@ class fine_tune_t5(BaseModel):
         super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
 
         self.model = nn.Linear(in_features=1024, out_features=1)
-        self.dropout = nn.Dropout(args.drop)
         model_name = r'Rostlab/prot_t5_xl_uniref50'
         self.plm_model = T5EncoderModel.from_pretrained(model_name)
         # freeze the grad
@@ -85,8 +84,7 @@ class fine_tune_t5(BaseModel):
 
         pa_embedds = torch.stack(return_tensor)
 
-        droped = self.dropout(pa_embedds)
-        output = self.model(droped)
+        output = self.model(pa_embedds)
 
         return output
 
@@ -150,8 +148,7 @@ class fine_tune_lora(BaseModel):
 
         pa_embedds = torch.stack(return_tensor)
 
-        droped = self.dropout(pa_embedds)
-        output = self.model(droped)
+        output = self.model(pa_embedds)
 
         return output
 
