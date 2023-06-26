@@ -49,17 +49,22 @@ class fine_tune_t5(BaseModel):
     def training_step(self, batch, batch_idx):
         # unfreeze layers based on epoch
         if self.current_epoch == 4 and not self.unfroze1:
-            params = [x for x in self.plm_model.parameters()]
-            params[-1].requires_grad_()
-            self.unfroze1 = True
-        if self.current_epoch == 5 and not self.unfroze2:
-            params = [x for x in self.plm_model.parameters()]
-            params[-2].requires_grad_()
-            self.unfroze2 = True
-        if self.current_epoch == 6 and not self.unfroze3:
-            params = [x for x in self.plm_model.parameters()]
-            params[-3].requires_grad_()
-            self.unfroze3 = True
+            named_module_dict = dict(self.plm_model.named_modules())
+            named_module_dict['encoder.block.23.layer.0.SelfAttention.q'].weight.requires_grad_(True)
+            named_module_dict['encoder.block.23.layer.0.SelfAttention.k'].weight.requires_grad_(True)
+            named_module_dict['encoder.block.23.layer.0.SelfAttention.v'].weight.requires_grad_(True)
+            named_module_dict['encoder.block.23.layer.0.SelfAttention.o'].weight.requires_grad_(True)
+
+
+            #next(dict(self.plm_model.named_modules())['encoder.block.23'].named_children())[1][0].SelfAttention.q.weight.requires_grad
+        # if self.current_epoch == 5 and not self.unfroze2:
+        #     params = [x for x in self.plm_model.parameters()]
+        #     params[-2].requires_grad_()
+        #     self.unfroze2 = True
+        # if self.current_epoch == 6 and not self.unfroze3:
+        #     params = [x for x in self.plm_model.parameters()]
+        #     params[-3].requires_grad_()
+        #     self.unfroze3 = True
 
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='train')
         self.log_dict(metric_dict)
