@@ -6,12 +6,11 @@ import torch
 from transformers import T5EncoderModel, T5Tokenizer
 import re
 from Model_training.utils.constants import seq_encoding_enum
-from .LoRA import LoRALinear,modify_with_lora
+from .LoRA import LoRALinear, modify_with_lora
 
 
 class fine_tune_t5(BaseModel):
     seq_encoding = seq_encoding_enum.seq
-
 
     def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
         super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
@@ -54,14 +53,15 @@ class fine_tune_t5(BaseModel):
             named_module_dict['encoder.block.23.layer.0.SelfAttention.k'].weight.requires_grad_(True)
             named_module_dict['encoder.block.23.layer.0.SelfAttention.v'].weight.requires_grad_(True)
             named_module_dict['encoder.block.23.layer.0.SelfAttention.o'].weight.requires_grad_(True)
+            self.unfroze1 = True
 
-        if self.current_epoch == 4 and not self.unfroze1:
+        if self.current_epoch == 4 and not self.unfroze2:
             named_module_dict = dict(self.plm_model.named_modules())
             named_module_dict['encoder.block.22.layer.0.SelfAttention.q'].weight.requires_grad_(True)
             named_module_dict['encoder.block.22.layer.0.SelfAttention.k'].weight.requires_grad_(True)
             named_module_dict['encoder.block.22.layer.0.SelfAttention.v'].weight.requires_grad_(True)
             named_module_dict['encoder.block.22.layer.0.SelfAttention.o'].weight.requires_grad_(True)
-
+            self.unfroze2 = True
 
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='train')
         self.log_dict(metric_dict)
@@ -89,7 +89,6 @@ class fine_tune_t5(BaseModel):
         output = self.model(pa_embedds)
 
         return output
-
 
     def configure_optimizers(self):
 
@@ -132,11 +131,9 @@ class fine_tune_lora(BaseModel):
         self.plm_model = T5EncoderModel.from_pretrained(model_name).requires_grad_(False)
         self.tokenizer = T5Tokenizer.from_pretrained(model_name, do_lower_case=False)
 
-        self.plm_model = modify_with_lora(self.plm_model,config)
-
+        self.plm_model = modify_with_lora(self.plm_model, config)
 
     def forward(self, sequences):
-
         sequences = [" ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequences]
         ids = self.tokenizer.batch_encode_plus(sequences, add_special_tokens=True, padding="longest")
         input_ids = torch.tensor(ids['input_ids']).to(self.device)
@@ -153,5 +150,3 @@ class fine_tune_lora(BaseModel):
         output = self.final_linear(pa_embedds)
 
         return output
-
-
