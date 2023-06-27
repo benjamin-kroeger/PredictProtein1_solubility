@@ -4,7 +4,7 @@ io:
 limit:
     coreLimit: 5
     # in hh:mm
-    runtimeLimit: 6:00
+    runtimeLimit: 40:00
     # Limit the execution to 8GB of CPU RAM
     memLimit: 8G!
 resource:
