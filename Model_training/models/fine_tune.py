@@ -111,7 +111,7 @@ class LoRAConfig:
     def __init__(self):
         self.lora_rank = 1
         self.lora_init_scale = 0.01
-        self.lora_modules = ".*block.2[2-3].layer.0.SelfAttention" # |.*EncDecAttention"
+        self.lora_modules = ".*block.2[2-3].layer.0.SelfAttention"
         self.lora_layers = "q|k|v|o"
         self.trainable_param_names = ".*layer_norm.*|.*lora_[ab].*"
         self.lora_scaling_rank = 1
