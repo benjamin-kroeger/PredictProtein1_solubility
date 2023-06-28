@@ -23,19 +23,18 @@ class fine_tune_t5(BaseModel):
         self.tokenizer = T5Tokenizer.from_pretrained(model_name, do_lower_case=False)
 
         self.lr_schedule = {
-            0: args.lr,  # Learning rate for epoch 0
-            3: 0.0001,  # Learning rate for epoch 3
-            4: 0.0002,  # Learning rate for epoch 4
-            5: 0.0003,  # Learning rate for epoch 5
-            6: 0.0003,
-            7: 0.0003,
-            8: 0.0004,
-            9: 0.0005,
-            10: 0.0006,
-            11: 0.0007,
-            12: 0.0008,
-            13: 0.0009,
-            14: 0.001
+            0: 1,  # Learning rate for epoch 0
+            3: 0.1,  # Learning rate for epoch 3
+            4: 0.2,  # Learning rate for epoch 4
+            5: 0.3,  # Learning rate for epoch 5
+            6: 0.3,
+            7: 0.3,
+            8: 0.4,
+            9: 0.5,
+            10: 0.6,
+            11: 0.7,
+            12: 0.8,
+            13: 0.9
         }
         self.unfroze1 = False
         self.unfroze2 = False
@@ -100,12 +99,12 @@ class fine_tune_t5(BaseModel):
             if epoch in self.lr_schedule:
                 return self.lr_schedule[epoch]
             else:
-                return self.args.lr
+                return 1
 
         # Define the learning rate scheduler
         scheduler = torch.optim.lr_scheduler.LambdaLR(optim, lr_lambda=lr_lambda)
 
-        return [optim], [{"scheduler": scheduler, "interval": "epoch"}]
+        return [optim],[scheduler]
 
 
 class LoRAConfig:
