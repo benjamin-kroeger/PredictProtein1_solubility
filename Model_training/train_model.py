@@ -41,7 +41,7 @@ def init_parser():
                         help='Weight decay')
     parser.add_argument('--gamma', type=float, required=False, default=1.00,
                         help='Gamma value for Exponential LR-Decay')
-    parser.add_argument('--acc_grad', action='store_true', required=False, default=False,
+    parser.add_argument('--acc_grad', type=int, required=False, default=1,
                         help='Set if gradient accumulation is desired')
     parser.add_argument('--epochs', type=int, required=False, default=100,
                         help='Set maxs number of epochs.')
@@ -106,7 +106,7 @@ def main(args):
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
         callbacks.append(best_checkpoint)
         if args.acc_grad:
-            accumulator = GradientAccumulationScheduler(scheduling={0: 6})
+            accumulator = GradientAccumulationScheduler(scheduling={0: args.acc_grad})
             callbacks.append(accumulator)
 
         # set up a logger
