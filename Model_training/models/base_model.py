@@ -42,19 +42,17 @@ class BaseModel(pl.LightningModule):
         encoded_seqs = batch[0]
         solubility_scores = batch[1]
 
-        predicted_solubility_scores = self.forward(encoded_seqs)
+        predicted_solubility_logits = self.forward(encoded_seqs)
 
         loss_func = nn.BCEWithLogitsLoss()
-        loss = loss_func(predicted_solubility_scores, solubility_scores)
+        loss = loss_func(predicted_solubility_logits, solubility_scores)
 
         if mode == 'val':
-            metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
-            metric_dict['val_loss'] = loss
+            metric_dict = {'solubility_scores': solubility_scores, 'predicted_scores': F.sigmoid(predicted_solubility_logits), 'val_loss': loss}
             return metric_dict
 
         if mode == 'test':
-            metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
-            metric_dict['test_loss'] = loss
+            metric_dict = {'solubility_scores': solubility_scores, 'predicted_scores': F.sigmoid(predicted_solubility_logits), 'test_loss': loss}
             return metric_dict
         if mode == 'train':
             return {'loss': loss}
@@ -73,25 +71,32 @@ class BaseModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='val')
         for key, value in metric_dict.items():
-            self.val_outputs[key].append(value)
-        return metric_dict
+            if key == 'val_loss':
+                self.val_outputs[key].append(value.cpu().item())
+                continue
+            self.val_outputs[key].extend(list(torch.squeeze(value.cpu()).numpy()))
 
     def on_validation_epoch_end(self):
-        for key, value in self.val_outputs.items():
-            self.log(key, torch.tensor(value).mean())
 
+        metric_dict = compute_metrics(y_true=self.val_outputs['solubility_scores'],y_pred_prob=self.val_outputs['predicted_scores'])
+        metric_dict['val_loss'] = torch.tensor(self.val_outputs['val_loss']).mean()
+        self.log_dict(metric_dict)
         self.val_outputs = defaultdict(list)
 
     def test_step(self, batch, batch_idx):
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='test')
         for key, value in metric_dict.items():
-            self.test_outputs[key].append(value)
-        return metric_dict
+            if key == 'test_loss':
+                self.test_outputs[key].append(value.cpu().item())
+                continue
+            self.test_outputs[key].extend(list(torch.squeeze(value.cpu()).numpy()))
 
     def on_test_epoch_end(self) -> None:
-        for key, value in self.test_outputs.items():
-            self.log(key, torch.tensor(value).mean())
+        metric_dict = compute_metrics(y_true=self.test_outputs['solubility_scores'], y_pred_prob=self.test_outputs['predicted_scores'])
+        metric_dict['test_loss'] = torch.tensor(self.val_outputs['test_loss']).mean()
+        self.log_dict(metric_dict)
         self.test_outputs = defaultdict(list)
+
 
 
     def train_dataloader(self):

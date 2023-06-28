@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, matthews_corrcoef, recall_score, precision_score, balanced_accuracy_score
 def compute_metrics(y_true, y_pred_prob) -> dict:
@@ -5,6 +6,9 @@ def compute_metrics(y_true, y_pred_prob) -> dict:
         y_true = y_true.cpu().numpy()
     if isinstance(y_pred_prob, torch.Tensor):
         y_pred_prob = y_pred_prob.cpu().numpy()
+
+    y_true = np.array(y_true)
+    y_pred_prob = np.array(y_pred_prob)
 
     try:
         roc_score = roc_auc_score(y_true=y_true, y_score=y_pred_prob)
