@@ -65,7 +65,7 @@ class BaseModel(pl.LightningModule):
 
     def on_train_epoch_start(self):
 
-        tainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        tainable_params = torch.tensor(sum(p.numel() for p in self.parameters() if p.requires_grad),dtype=torch.float32)
         self.log('trainable_parameters',tainable_params)
 
     def validation_step(self, batch, batch_idx):
@@ -141,6 +141,6 @@ class BaseModel(pl.LightningModule):
         params = self.parameters()
 
         optim = torch.optim.Adam(params=params, betas=(0.9, 0.999), lr=self.args.lr, weight_decay=self.args.reg)
-        # scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, gamma=self.opt.gamma)
 
-        return [optim]  # , [scheduler]
+
+        return [optim]

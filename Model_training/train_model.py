@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 import torch
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, GradientAccumulationScheduler
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, GradientAccumulationScheduler, LearningRateMonitor
 from pytorch_lightning.loggers import WandbLogger
 from sklearn.model_selection import KFold
 
@@ -104,6 +104,8 @@ def main(args):
         callbacks.append(early_stop_callback)
         best_checkpoint = ModelCheckpoint(monitor='val_loss', save_top_k=1, mode="min", dirpath="Data/chpts",
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
+        lr_monitor = LearningRateMonitor(logging_interval='step')
+        callbacks.append(lr_monitor)
         callbacks.append(best_checkpoint)
         if args.acc_grad:
             accumulator = GradientAccumulationScheduler(scheduling={0: args.acc_grad})
