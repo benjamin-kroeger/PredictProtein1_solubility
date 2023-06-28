@@ -108,6 +108,7 @@ class fine_tune_t5(BaseModel):
 
 
 class LoRAConfig:
+    # lora rank determines the amount of params significantly
     def __init__(self):
         self.lora_rank = 1
         self.lora_init_scale = 0.01
