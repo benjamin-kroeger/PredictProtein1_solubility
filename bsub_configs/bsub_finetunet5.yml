@@ -8,7 +8,7 @@ limit:
     # Limit the execution to 8GB of CPU RAM
     memLimit: 8G!
 resource:
-    gpu: num=1/task:mode=shared:gmem=12G:j_exclusive=no:gpack=yes
+    gpu: num=1/task:mode=shared:gmem=40G:j_exclusive=yes:gpack=yes
 
 properties:
     queueName: mid-end-normal
