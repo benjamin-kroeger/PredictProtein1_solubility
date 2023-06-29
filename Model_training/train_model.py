@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 from Model_training.models.base_model import BaseModel
 from Model_training.models.lin_models import *
 from Model_training.models.fine_tune import fine_tune_t5, fine_tune_lora
+from models.LightAttentionModel import *
 from NetSolp_Dataset import NetsolpDataset
 from NESG_Dataset import NESGDataset
 from utils.constants import seq_encoding_enum, mode_enum
