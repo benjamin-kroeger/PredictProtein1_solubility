@@ -90,6 +90,11 @@ if __name__ == '__main__':
     # concatenate dataframes
     df = pd.concat([baseline_df, finetune_df, linear_df, attention_df])
 
+    # print mean and standard deviation of metrics
+    df_agg = df.groupby(["model", "metric"])["value"].agg("mean", "std")
+    print(df_agg)
+    # df_agg.to_csv("")
+
     # plot with seaborn
     colors = {"baseline": (0.7, 0.7, 0.7),
               "finetune": "royalblue",
