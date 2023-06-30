@@ -66,6 +66,16 @@ if __name__ == '__main__':
     linear_df = pd.DataFrame()
     attention_df = pd.DataFrame()
 
+    # NetSolP results
+    data = {
+        'metric': ['acc', 'test_acc', 'mcc', 'precision', 'auc'],
+        'mean': [0.7, 0.782, 0.402, 0.773, 0.760],
+        'std': [0.02, 0, 0, 0, 0]
+    }
+
+    netsolp_df = pd.DataFrame(data)
+    netsolp_df["model"] = "NetSolP"
+
     # check if at least one file was specified
     if not (args.baseline or args.finetune or args.linear or args.attention):
         raise Exception("At least one csv file must be specified.")
@@ -91,15 +101,22 @@ if __name__ == '__main__':
     df = pd.concat([baseline_df, finetune_df, linear_df, attention_df])
 
     # print mean and standard deviation of metrics
-    df_agg = df.groupby(["model", "metric"])["value"].agg("mean", "std")
+    df_agg = df.groupby(["model", "metric"])["value"].agg(["mean", "std"])
     print(df_agg)
-    # df_agg.to_csv("")
+    print(netsolp_df)
+
+    # Set the size of the plot
+    plt.figure(figsize=(8, 4))
 
     # plot with seaborn
+    netsolp_df["value"] = netsolp_df["mean"]
+    df = pd.concat([df, netsolp_df])
     colors = {"baseline": (0.7, 0.7, 0.7),
               "finetune": "royalblue",
               "linear": "cornflowerblue",
-              "light-attention": "lightblue"}
+              "light-attention": "skyblue",
+              "NetSolP": "lightseagreen"}
     sns.barplot(df[df["metric"].isin(metrics)], x="metric", y="value", hue="model", errorbar='se',
                 palette=colors)
+    plt.legend(loc='lower left')
     plt.show()
