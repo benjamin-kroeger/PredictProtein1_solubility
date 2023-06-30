@@ -1,4 +1,5 @@
 import numpy as np
+import sklearn.metrics
 import torch
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, matthews_corrcoef, recall_score, precision_score, balanced_accuracy_score
 def compute_metrics(y_true, y_pred_prob) -> dict:

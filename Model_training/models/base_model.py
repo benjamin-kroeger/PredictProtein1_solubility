@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 import pytorch_lightning as pl
+import sklearn.metrics
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -94,8 +95,15 @@ class BaseModel(pl.LightningModule):
     def on_test_epoch_end(self) -> None:
         metric_dict = compute_metrics(y_true=self.test_outputs['solubility_scores'], y_pred_prob=self.test_outputs['predicted_scores'])
         metric_dict['test_loss'] = torch.tensor(self.val_outputs['test_loss']).mean()
+        with open(f'{self.args.model}_test_conf.txt','a') as f:
+            y_true = np.array(self.test_outputs['solubility_scores'])
+            y_pred = (np.array(self.test_outputs['predicted_scores']) > 0.5).astype(int)
+
+            f.write(str(sklearn.metrics.confusion_matrix(y_true,y_pred)))
+            f.write('\n')
         self.log_dict(metric_dict)
         self.test_outputs = defaultdict(list)
+
 
 
 

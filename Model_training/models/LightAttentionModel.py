@@ -11,9 +11,9 @@ from torch import nn
 from torch.utils.data import Dataset
 
 from .base_model import BaseModel
-from utils.collate_functions import collate_pp, collate_seq, collate_pa
-from utils.constants import seq_encoding_enum
-from utils.metrics import compute_metrics
+from Model_training.utils.collate_functions import collate_pp, collate_seq, collate_pa
+from Model_training.utils.constants import seq_encoding_enum
+from Model_training.utils.metrics import compute_metrics
 
 class LightAttention(BaseModel):
     seq_encoding = seq_encoding_enum.pa
