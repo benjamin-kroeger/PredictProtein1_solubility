@@ -66,7 +66,7 @@ class LightAttention(BaseModel):
         return self.output(o)  # [batchsize, output_dim]
 
     def general_step(self, batch, batch_idx, mode):
-        encoded_seqs = self.pad_sequence(batch[0], 1024)
+        encoded_seqs = batch[0]
         masks = encoded_seqs.bool().any(axis=2)
         encoded_seqs = encoded_seqs.permute(0,2,1)
         solubility_scores = batch[1]
@@ -77,13 +77,11 @@ class LightAttention(BaseModel):
         loss = loss_func(predicted_solubility_scores, solubility_scores)
 
         if mode == 'val':
-            metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
-            metric_dict['val_loss'] = loss
+            metric_dict = {'solubility_scores': solubility_scores, 'predicted_scores': F.sigmoid(predicted_solubility_scores), 'val_loss': loss}
             return metric_dict
 
         if mode == 'test':
-            metric_dict = compute_metrics(y_true=solubility_scores, y_pred_prob=F.sigmoid(predicted_solubility_scores))
-            metric_dict['test_loss'] = loss
+            metric_dict = {'solubility_scores': solubility_scores, 'predicted_scores': F.sigmoid(predicted_solubility_scores), 'test_loss': loss}
             return metric_dict
         if mode == 'train':
             return {'loss': loss}
