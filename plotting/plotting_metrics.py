@@ -28,6 +28,7 @@ def init_parser():
     parser.add_argument('--auc', action='store_true', default=False)
     parser.add_argument('--mcc', action='store_true', default=False)
     parser.add_argument('--test_loss', action='store_true', default=False)
+    parser.add_argument('--train_acc', action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -55,6 +56,8 @@ if __name__ == '__main__':
         metrics.append("mcc")
     if args.test_loss:
         metrics.append("test_loss")
+    if args.train_acc:
+        metrics.append("train_acc")
 
     # check if at least one metric is specified
     if len(metrics) == 0:
@@ -68,10 +71,11 @@ if __name__ == '__main__':
 
     # NetSolP results
     data = {
-        'metric': ['acc', 'test_acc', 'mcc', 'precision', 'auc'],
+        'metric': ['train_acc', 'acc', 'mcc', 'precision', 'auc'],
         'mean': [0.7, 0.782, 0.402, 0.773, 0.760],
         'std': [0.02, 0, 0, 0, 0]
     }
+    #
 
     netsolp_df = pd.DataFrame(data)
     netsolp_df["model"] = "NetSolP"
@@ -83,19 +87,28 @@ if __name__ == '__main__':
     # read the files
     if args.baseline:
         baseline_df = pd.read_csv(args.baseline)
+        baseline_df = baseline_df._append(pd.DataFrame(
+            {"metric": ["train_acc", "train_acc", "train_acc", "train_acc", "train_acc"], "value": [0.6556, 0.6485, 0.6579, 0.6624, 0.701]}))  # add train accuracy from wandb
         baseline_df["model"] = "baseline"
         baseline = True
     if args.finetune:
         finetune_df = pd.read_csv(args.finetune)
+        finetune_df = finetune_df._append(pd.DataFrame(
+            {"metric": ["train_acc", "train_acc", "train_acc", "train_acc", "train_acc"], "value": [0, 0, 0, 0, 0]}))  # TODO: add train accuracy from wandb
         finetune_df["model"] = "finetune"
         finetune = True
     if args.linear:
         linear_df = pd.read_csv(args.linear)
+        linear_df = linear_df._append(pd.DataFrame(
+            {"metric": ["train_acc", "train_acc", "train_acc", "train_acc", "train_acc"], "value": [0.7367, 0.7348, 0.7015, 0.7246, 0.7737]}))
         linear_df["model"] = "linear"
         linear = True
     if args.attention:
         attention_df = pd.read_csv(args.attention)
+        attention_df = attention_df._append(pd.DataFrame(
+            {"metric": ["train_acc", "train_acc", "train_acc", "train_acc", "train_acc"], "value": [0.7476, 0.7019, 0.718, 0.715, 0.7672]}))   # train accuracy from wandb
         attention_df["model"] = "light-attention"
+        attention = True
 
     # concatenate dataframes
     df = pd.concat([baseline_df, finetune_df, linear_df, attention_df])
