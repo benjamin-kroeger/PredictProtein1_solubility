@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold
 
 from Model_training.models.base_model import BaseModel
 from Model_training.models.lin_models import *
-from Model_training.models.fine_tune import fine_tune_t5, fine_tune_lora
+from Model_training.models.fine_tune import fine_tune_t5, fine_tune_lora,fine_tune_t5_insta
 from models.LightAttentionModel import *
 from NetSolp_Dataset import NetsolpDataset
 from NESG_Dataset import NESGDataset
@@ -101,7 +101,7 @@ def main(args):
 
         callbacks = []
         # set up early stopping and storage of the best model
-        early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min")
+        early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=1, verbose=False, mode="min")
         callbacks.append(early_stop_callback)
         best_checkpoint = ModelCheckpoint(monitor='val_loss', save_top_k=1, mode="min", dirpath="Data/chpts",
                                           filename=f'{type(model).__name__}' + "-{epoch:02d}-{val_loss:.2f}", auto_insert_metric_name=True)
@@ -154,7 +154,7 @@ def main(args):
             accelerator='gpu' if device == torch.device('cuda') else 'cpu',
             devices=1,
             logger=wandb_logger,
-            log_every_n_steps=3
+            log_every_n_steps=1
         )
 
         test_metrics = []

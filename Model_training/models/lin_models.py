@@ -161,9 +161,9 @@ class TwoLayerLin64(BaseModel):
 
 class OneLayerLin(BaseModel):
 
-    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None,
-                 test_set: Dataset = None):
-        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set)
+    def __init__(self, args: Namespace, train_set: Dataset = None, val_set: Dataset = None, test_set: Dataset = None, sampler=None):
+        super().__init__(args=args, train_set=train_set, val_set=val_set, test_set=test_set, sampler=sampler)
+
         self.model = nn.Linear(1024, 1)
 
     def forward(self, pp_embedds):

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytorch_lightning as pl
 import random
 from argparse import Namespace
@@ -8,7 +10,7 @@ import pytorch_lightning as pl
 import sklearn.metrics
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import Dataset
 
 from Model_training.utils.collate_functions import collate_pp, collate_seq, collate_pa
@@ -43,10 +45,14 @@ class BaseModel(pl.LightningModule):
         encoded_seqs = batch[0]
         solubility_scores = batch[1]
 
+        pre_mem = torch.cuda.memory_allocated()
         predicted_solubility_logits = self.forward(encoded_seqs)
-
         loss_func = nn.BCEWithLogitsLoss()
         loss = loss_func(predicted_solubility_logits, solubility_scores)
+        loss.backward(retain_graph=True)
+        gradient_memory = torch.cuda.memory_allocated() -pre_mem
+        self.log('grad_mem_mb',gradient_memory/1024/1024)
+
 
         if mode == 'val':
             metric_dict = {'solubility_scores': solubility_scores, 'predicted_scores': F.sigmoid(predicted_solubility_logits), 'val_loss': loss}
@@ -57,6 +63,22 @@ class BaseModel(pl.LightningModule):
             return metric_dict
         if mode == 'train':
             return {'loss': loss}
+
+    # def backward(self, loss: Tensor, *args: Any, **kwargs: Any) -> None:
+    #     super().backward(loss)
+    #     gradients = []
+    #     for name, param in self.named_parameters():
+    #         if param.grad is not None:
+    #             gradients.append(param.grad)
+    #             # For parameters that participate in computations generating gradients,
+    #             # also consider the gradients produced by those operations.
+    #             if param.grad_fn is not None and param.grad_fn.next_functions:
+    #                 for next_fn in param.grad_fn.next_functions:
+    #                     if next_fn[0] is not None and hasattr(next_fn[0], 'variable'):
+    #                         gradients.append(next_fn[0].variable.grad)
+    #     gradient_memory = sum([grad.element_size() * grad.nelement() for grad in gradients])
+    #     self.log('grad_mem_mb',gradient_memory/1024/1024)
+
 
     def training_step(self, batch, batch_idx):
         metric_dict = self.general_step(batch=batch, batch_idx=batch_idx, mode='train')
