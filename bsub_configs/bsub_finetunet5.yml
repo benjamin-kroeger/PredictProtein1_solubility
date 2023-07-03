@@ -16,4 +16,4 @@ properties:
 command: |
     #!/bin/bash
     export PYTHONPATH=$PYTHONPATH:/mnt/project/kroeger/predictprotein1_solubility
-    python3 Model_training/train_model.py --solubility_data Data/PSI_Biology_solubility_trainset.csv --model fine_tune_t5 --epochs 50 --batch_size 20 --acc_grad 3
+    python3 Model_training/train_model.py --solubility_data Data/PSI_Biology_solubility_trainset.csv --model fine_tune_t5 --epochs 50 --batch_size 20 --acc_grad 3 --test_model --test_solubility_data Data/NESG_testset_formatted.csv
