@@ -45,13 +45,13 @@ class BaseModel(pl.LightningModule):
         encoded_seqs = batch[0]
         solubility_scores = batch[1]
 
-        pre_mem = torch.cuda.memory_allocated()
+        #pre_mem = torch.cuda.memory_allocated()
         predicted_solubility_logits = self.forward(encoded_seqs)
         loss_func = nn.BCEWithLogitsLoss()
         loss = loss_func(predicted_solubility_logits, solubility_scores)
-        loss.backward(retain_graph=True)
-        gradient_memory = torch.cuda.memory_allocated() -pre_mem
-        self.log('grad_mem_mb',gradient_memory/1024/1024)
+        #loss.backward(retain_graph=True)
+        #gradient_memory = torch.cuda.memory_allocated() -pre_mem
+        #self.log('grad_mem_mb',gradient_memory/1024/1024)
 
 
         if mode == 'val':
